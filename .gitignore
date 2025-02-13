@@ -31,5 +31,9 @@
 *.out
 *.app
 
-#CMake Build Artifacts
+# CMake Build Artifacts
 build/
+bin/
+
+# Vscode Fles
+.vscode/

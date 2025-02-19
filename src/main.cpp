@@ -8,6 +8,10 @@
 #include "shader.h"
 #include "texture.h"
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 // Callback prototypes
 void errorCallback(int error, const char* description);
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
@@ -69,6 +73,14 @@ int main(int argc, char* argv[]) {
 
     std::cout << "OpenGL Version: " << glGetString(GL_VERSION) << std::endl;
 
+    // Initialize ImGui
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init("#version 410");
+
 
     // set up fragment & vertex shader program
     GLuint shaderProgram = createShaderProgram(getFilePath("basic.vert"), getFilePath("basic.frag"));
@@ -88,19 +100,58 @@ int main(int argc, char* argv[]) {
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 
+    // setting up dog parameters
+    
+    float k; // scalar multiplier on second gaussian
+    float epsilon; // threshold value
+    float phi; // parameter for tanh function
+    float tau; // parameter controlling the weight of each gaussian
+    float sigma_c; // stdev of gaussian blur applied to SST
+    float sigma_e; // stdev of gradient aligned gaussian blur
+    float sigma_m; // stdev of gaussian used for line integral convolution
+    float sigma_a; // stdev of second LIC gaussian for anti-aliasing
+    int kernel_size = 5;
+
     // main loop
     while(!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
-        glfwSwapBuffers(window);
         glfwPollEvents();
+
+        // Start imGui frame
+        ImGui_ImplOpenGL3_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+        ImGui::Begin("DoG Filter");
+        ImGui::SliderFloat("k", &k, 0.0f, 1.0f);
+        ImGui::SliderFloat("epsilon", &epsilon, 0.0f, 255.0f);
+        ImGui::SliderFloat("phi", &phi, 0.0f, 1.0f);
+        ImGui::SliderFloat("tau", &tau, 0.0f, 50.0f);
+        ImGui::SliderFloat("sigma_c", &sigma_c, 0.0f, 10.0f);
+        ImGui::SliderFloat("sigma_e", &sigma_e, 0.0f, 10.0f);
+        ImGui::SliderFloat("sigma_m", &sigma_m, 0.0f, 10.0f);
+        ImGui::SliderFloat("sigma_a", &sigma_a, 0.0f, 10.0f);
+        ImGui::End();
+
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
+        // ImGui
+        ImGui::Render();
+        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+        glfwSwapBuffers(window);
     }
 
     // Cleanup
     glDeleteProgram(shaderProgram);
     glDeleteTextures(1, &texture);
     glDeleteVertexArrays(1, &VAO);
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
     glfwDestroyWindow(window);
     glfwTerminate();
     return 0;

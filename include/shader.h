@@ -7,6 +7,4 @@
 std::string readShaderFile(const std::string& filePath);
 GLuint compileShader(GLenum shaderType, const std::string& shaderSource);
 GLuint createShaderProgram(const std::string& vertexPath, const std::string& fragmentPath);
-GLuint createComputeShaderProgram(const std::string& computePath);
-
 #endif // SHADER_H

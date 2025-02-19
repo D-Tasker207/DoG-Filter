@@ -83,9 +83,10 @@ int main(int argc, char* argv[]) {
 
 
     // set up fragment & vertex shader program
-    GLuint shaderProgram = createShaderProgram(getFilePath("basic.vert"), getFilePath("basic.frag"));
+    GLuint shaderProgram = createShaderProgram("basic.vert", "basic.frag");
 
-    // set up compute shader program
+    // set up filter shader programs
+    
 
     // store the image in a texture
     GLuint texture = createTexture(data, width, height, nrChannels);

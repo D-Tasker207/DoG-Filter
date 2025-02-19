@@ -3,6 +3,7 @@
 #include <sstream>
 #include <string>
 #include <iostream>
+#include "filePath.h"
 
 std::string readShaderFile(const std::string& filePath) {
     std::ifstream shaderFile;
@@ -38,8 +39,8 @@ GLuint compileShader(GLenum shaderType, const std::string& shaderSource) {
 }
 
 GLuint createShaderProgram(const std::string& vertexPath, const std::string& fragmentPath) {
-    std::string vertexCode = readShaderFile(vertexPath);
-    std::string fragmentCode = readShaderFile(fragmentPath);
+    std::string vertexCode = readShaderFile(getFilePath(vertexPath));
+    std::string fragmentCode = readShaderFile(getFilePath(fragmentPath));
 
     GLuint vertexShader = compileShader(GL_VERTEX_SHADER, vertexCode);
     GLuint fragmentShader = compileShader(GL_FRAGMENT_SHADER, fragmentCode);
@@ -61,25 +62,5 @@ GLuint createShaderProgram(const std::string& vertexPath, const std::string& fra
     glDeleteShader(fragmentShader);
 
     return shaderProgram;
-}
-
-GLuint createComputeShaderProgram(const std::string& computePath) {
-    std::string computeCode = readShaderFile(computePath.c_str());
-    GLuint computeShader = compileShader(GL_COMPUTE_SHADER, computeCode);
-
-    GLuint computeProgram = glCreateProgram();
-    glAttachShader(computeProgram, computeShader);
-    glLinkProgram(computeProgram);
-
-    GLint success;
-    char infoLog[512];
-    glGetProgramiv(computeProgram, GL_LINK_STATUS, &success);
-    if(!success) {
-        glGetProgramInfoLog(computeProgram, 512, nullptr, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-    }
-
-    glDeleteShader(computeProgram);
-    return computeProgram;
 }
 

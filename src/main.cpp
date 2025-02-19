@@ -6,6 +6,7 @@
 #include "stb_image.h"
 #include "filePath.h"
 #include "shader.h"
+#include "texture.h"
 
 // Callback prototypes
 void errorCallback(int error, const char* description);
@@ -13,6 +14,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void resizeCallback(GLFWwindow* window, int width, int height);
 void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 void mouseScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+
+// Helper functions
+void getMaxWindowSize(GLFWmonitor* monitor, int imgWidth, int imgHeight, int& winWidth, int& winHeight);
 
 int main(int argc, char* argv[]) {
     if(argc < 2) {
@@ -43,7 +47,9 @@ int main(int argc, char* argv[]) {
     #endif
 
     // Create Window
-    GLFWwindow* window = glfwCreateWindow(width, height, "DoG filter", NULL, NULL);
+    int winWidth, winHeight;
+    getMaxWindowSize(glfwGetPrimaryMonitor(), width, height, winWidth, winHeight); 
+    GLFWwindow* window = glfwCreateWindow(winWidth, winHeight, "DoG filter", NULL, NULL);
     if(!window) {
         std::cerr << "Failed to create window" << std::endl;
         return -1;
@@ -70,35 +76,22 @@ int main(int argc, char* argv[]) {
     // set up compute shader program
 
     // store the image in a texture
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glBindTexture(GL_TEXTURE_2D, 0);
+    GLuint texture = createTexture(data, width, height, nrChannels);
     stbi_image_free(data);
 
-    // Set the clear color
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
     glUseProgram(shaderProgram);
-    glUniform1i(glGetUniformLocation(shaderProgram, "computedTexture"), 0);
+    bindTextureToShader(texture, 0, shaderProgram, "computedTexture");
 
     GLuint VAO;
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
 
+    glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
     // main loop
     while(!glfwWindowShouldClose(window)) {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // bind texture
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture);
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -124,5 +117,23 @@ void resizeCallback(GLFWwindow* window, int width, int height) {
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
     if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, GL_TRUE);
+    }
+}
+
+void getMaxWindowSize(GLFWmonitor* monitor, int imgWidth, int imgHeight, int& winWidth, int& winHeight) {
+    int screenWidth, screenHeight;  
+    int xpos, ypos; 
+
+    glfwGetMonitorWorkarea(monitor, &xpos, &ypos, &screenWidth, &screenHeight);
+
+    float imgAspectRatio = (float)imgWidth / (float)imgHeight;
+    float screenAspectRatio = (float)screenWidth / (float)screenHeight;
+
+    if (imgAspectRatio > screenAspectRatio) {
+        winWidth = screenWidth;
+        winHeight = (int)(winWidth / imgAspectRatio);
+    } else {
+        winHeight = screenHeight;
+        winWidth = (int)(winHeight * imgAspectRatio);
     }
 }

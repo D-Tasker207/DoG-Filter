@@ -10,7 +10,7 @@ uniform float sigma;
 out vec4 fragColor;
 
 float gaussian1d(float x, float sigma) {
-    return exp(-x * x / (2.0 * sigma * sigma)) / (sqrt(2.0 * 3.14159265359) * sigma);
+    return exp(-x * x / (2.0 * sigma * sigma));
 }
 
 void main() {

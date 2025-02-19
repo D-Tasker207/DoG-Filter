@@ -14,5 +14,5 @@ void main() {
 
     vec3 difference = (1 + tau) * blurred1 - tau * blurred2;
 
-    fragColor = vec4(difference.rgb, 1.0);
+    fragColor = vec4(difference, 1.0);
 }

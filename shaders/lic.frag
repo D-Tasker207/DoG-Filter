@@ -5,13 +5,12 @@ in vec2 outTexCoord;
 uniform sampler2D imageSampler;
 uniform sampler2D etfSampler;
 uniform int kernelSteps;
-uniform int stepSize;
 uniform float sigma;
 
 out vec4 fragColor;
 
 float gaussian1d(float x, float sigma) {
-    return exp(-x * x / (2.0 * sigma * sigma)) / (sqrt(2.0 * 3.14159265359) * sigma);
+    return exp(-x * x / (2.0 * sigma * sigma));
 }
 
 void main() {
@@ -28,9 +27,9 @@ void main() {
     vec2 currentCoord = outTexCoord;
     float t = 0.0;
     for(int i = 1; i <= kernelSteps; i++){
-        vec2 flow = normalize(texture(etfSampler, currentCoord).xy);
-        currentCoord += flow * stepSize;
-        t += stepSize;
+        vec2 flow = normalize(texture(etfSampler, currentCoord).xy) * texelSize;
+        currentCoord += flow;
+        t += 1;
 
         if(currentCoord.x < 0.0 || currentCoord.x > 1.0 || 
            currentCoord.y < 0.0 || currentCoord.y > 1.0) {
@@ -46,9 +45,9 @@ void main() {
     currentCoord = outTexCoord;
     t = 0.0;
     for(int i = 1; i <= kernelSteps; i++){
-        vec2 flow = normalize(texture(etfSampler, currentCoord).xy);
-        currentCoord -= flow * stepSize;
-        t += stepSize;
+        vec2 flow = normalize(texture(etfSampler, currentCoord).xy) * texelSize;
+        currentCoord -= flow;
+        t += 1;
         if (currentCoord.x < 0.0 || currentCoord.x > 1.0 || 
             currentCoord.y < 0.0 || currentCoord.y > 1.0) {
             break;
